@@ -3,6 +3,9 @@ version: '3'
 services:
   ollama:
     image: ollama/ollama
+    networks:
+      - no-internet
+      - internet
     ports:
       - 11434:11434
     volumes:
@@ -11,12 +14,24 @@ services:
       - OLLAMA_NUM_PARALLEL=5
 
   
+  init-stablediffusion:
+    build:
+      context: .
+      dockerfile: Dockerfile.automatic1111
+    entrypoint: bash -c "aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/ckpt/juggernaut-xl/resolve/main/juggernautXL_version2.safetensors -d /content/stable-diffusion-webui/models/Stable-diffusion -o juggernautXL_version2.safetensors"
+    networks:
+      - internet
   automatic1111:
     build:
       context: .
-      dockerfile: Dockerfile.automatic1111.cpu
+      dockerfile: Dockerfile.automatic1111
+    # Komment out if you want to run all components on GPUs instead of CPU
+    command: ["--use-cpu", "all"]
     restart: unless-stopped
-    network_mode: host
+    depends_on:
+      - init-stablediffusion
+    networks:
+      - no-internet
     environment:
       - PYTHONUNBUFFERED=1
     ports:
@@ -25,8 +40,17 @@ services:
       - ./stable-diffusion:/content/stable-diffusion-webui/models/Stable-diffusion/
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
+    networks:
+      - no-internet
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
       - AUTOMATIC1111_BASE_URL=http://stable-diffusion-webui:7860
     ports:
       - 8080:8080
+ 
+networks:
+  no-internet:
+    driver: bridge
+    internal: true
+  internet:
+    driver: bridge

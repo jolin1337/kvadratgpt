@@ -18,5 +18,10 @@ RUN git clone -b v2.6 https://github.com/camenduru/stable-diffusion-webui && \
     python launch.py --skip-torch-cuda-test && \
     git reset --hard
 
+WORKDIR /content/stable-diffusion-webui
+
+# If you want to predownload the model into built image:
 # RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/ckpt/juggernaut-xl/resolve/main/juggernautXL_version2.safetensors -d /content/stable-diffusion-webui/models/Stable-diffusion -o juggernautXL_version2.safetensors
-CMD cd /content/stable-diffusion-webui && python launch.py --host 0.0.0.0 --use-cpu all --precision full --no-half --skip-torch-cuda-test --cors-allow-origins=* --api
+
+# Get the service up and running with additional flags from the CMD
+ENTRYPOINT [ "python", "launch.py", "--precision", "full", "--no-half", "--skip-torch-cuda-test", "--cors-allow-origins=*", "--api", "--listen" ]
