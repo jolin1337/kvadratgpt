@@ -12,6 +12,7 @@ services:
       - ./:/root/.ollama
     environment:
       - OLLAMA_NUM_PARALLEL=5
+      - OLLAMA_KEEP_ALIVE=120m
 
   
   init-stablediffusion:
@@ -47,7 +48,38 @@ services:
       - AUTOMATIC1111_BASE_URL=http://stable-diffusion-webui:7860
     ports:
       - 8080:8080
- 
+  anythingllm:
+    image: mintplexlabs/anythingllm
+    container_name: anythingllm
+    networks:
+      - no-internet
+      - internet
+    ports:
+    - "3001:3001"
+    environment:
+    # Adjust for your environment
+      - STORAGE_DIR=/app/server/storage
+      - JWT_SECRET="8VYqaqdPipSuJgFkYyf8hCowv3kygj8GpzEGjJX4RkShZ9xyAZyRcjVKhiP4b8oVbL37yWUsfbu"
+      - LLM_PROVIDER=ollama
+      - OLLAMA_BASE_PATH=http://ollama:11434
+      - OLLAMA_MODEL_PREF=llama3.1
+      - OLLAMA_MODEL_TOKEN_LIMIT=4096
+      - EMBEDDING_ENGINE=ollama
+      - EMBEDDING_BASE_PATH=http://ollama:11434
+      - EMBEDDING_MODEL_PREF=nomic-embed-text:latest
+      - EMBEDDING_MODEL_MAX_CHUNK_LENGTH=1192
+      - VECTOR_DB=lancedb
+      - WHISPER_PROVIDER=local
+      - TTS_PROVIDER=native
+      - PASSWORDMINCHAR=8
+      - AGENT_SERPER_DEV_KEY="SERPER DEV API KEY"
+      - AGENT_SERPLY_API_KEY="Serply.io API KEY"
+      - VITE_API_BASE="http://<YOUR_REACHABLE_IP_ADDRESS>:3001/api"
+      - DISABLE_TELEMETRY="true"
+    volumes:
+      - ./anythingllm:/app/server/storage
+    restart: always
+
 networks:
   no-internet:
     driver: bridge
